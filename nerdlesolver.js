@@ -761,30 +761,16 @@ function generateNewSuggestionRecursive(kString, eSolutionType)
     return [false, ""];
 }
 
-function generateNewSuggestion()
-{
-    var kResult = generateNewSuggestionRecursive("", E_SOLUTION_GOOD);
-    if (kResult[0])
-    {
-        return kResult[1];
-    }
-    else
-    {
-        kResult = generateNewSuggestionRecursive("", E_SOLUTION_OK);
-        if (kResult[0])
-        {
-            return kResult[1];
-        }
-        else
-        {
-            kResult = generateNewSuggestionRecursive("", E_SOLUTION_NAFF);
-            if (kResult[0])
-            {
-                return kResult[1];
-            }
-        }
-    }
+function generateNewSuggestion() {
+  const solutions = [E_SOLUTION_GOOD, E_SOLUTION_OK, E_SOLUTION_NAFF];
 
-    kIssuesTextNode.textContent = "Failed to find a suggestion... double check you coloured everything correctly, and if so, maybe raise an issue on the Github page and a link/description/screenshot of the puzzle?";
-    return "";
+  for (const solution of solutions) {
+    const kResult = generateNewSuggestionRecursive("", solution);
+    if (kResult[0]) {
+      return kResult[1];
+    }
+  }
+
+  kIssuesTextNode.textContent = "Failed to find a suggestion... double check you coloured everything correctly, and if so, maybe raise an issue on the Github page and a link/description/screenshot of the puzzle?";
+  return "";
 }
