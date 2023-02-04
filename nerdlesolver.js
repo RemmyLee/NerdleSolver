@@ -303,24 +303,19 @@ function processExpression()
 
 
 
-function getStateWeighting(kClassState)
-{
-    if (E_NODE_POSITION_UNKNOWN == kClassState)
-    {
-        return 0;
-    }
-    else if (E_NODE_POSITION_UNUSED == kClassState)
-    {
-        return 1;
-    }
-    else if (E_NODE_POSITION_USED == kClassState)
-    {
-        return 2;
-    }
-    else if (E_NODE_POSITION_CORRECT == kClassState)
-    {
-        return 3;
-    }
+function getStateWeighting(kClassState) {
+  switch (kClassState) {
+    case E_NODE_POSITION_UNKNOWN:
+      return 0;
+    case E_NODE_POSITION_UNUSED:
+      return 1;
+    case E_NODE_POSITION_USED:
+      return 2;
+    case E_NODE_POSITION_CORRECT:
+      return 3;
+    default:
+      return 0;
+  }
 }
 
 
@@ -328,35 +323,29 @@ function getStateWeighting(kClassState)
 
 
 
-function processResultForVirtualKeyboard(kEntries, kCurrentRow, kVirtualKeyboardRow)
-{
-    for (var i = 0; i < kEntries.length; ++i)
-    {
-        const kEntry                    = kEntries.charAt(i);
-        const kInitialWorstFound        = kVirtualKeyboardRow[i].classList.item(0);
-        const nInitialWorstCaseWeight   = getStateWeighting(kInitialWorstFound);
-        var   kWorstFound               = kInitialWorstFound;
-        var   nWorstCaseWeight          = nInitialWorstCaseWeight;
+function processResultForVirtualKeyboard(kEntries, kCurrentRow, kVirtualKeyboardRow) {
+    const n = kEntries.length;
+    for (let i = 0; i < n; i++) {
+        const kEntry = kEntries.charAt(i);
+        const initialWorstFound = kVirtualKeyboardRow[i].classList[0];
+        let worstFound = initialWorstFound;
+        let worstCaseWeight = getStateWeighting(worstFound);
 
-        for (var j = 0; j < kCurrentRow.length; ++j)
-        {
-            const kCandidateChar   = kCurrentRow[j].childNodes[0].textContent;
-            if (kCandidateChar == kEntry)
-            {
-                const kCandidate       = kCurrentRow[j].classList.item(0);
-                const nCandidateWeight = getStateWeighting(kCandidate);
+        for (let j = 0, m = kCurrentRow.length; j < m; j++) {
+            const kCandidateChar = kCurrentRow[j].childNodes[0].textContent;
+            if (kCandidateChar === kEntry) {
+                const candidate = kCurrentRow[j].classList[0];
+                const candidateWeight = getStateWeighting(candidate);
 
-                if (nCandidateWeight > nWorstCaseWeight)
-                {
-                    kWorstFound      = kCandidate;
-                    nWorstCaseWeight = nCandidateWeight;
+                if (candidateWeight > worstCaseWeight) {
+                    worstFound = candidate;
+                    worstCaseWeight = candidateWeight;
                 }
             }
         }
 
-        if (nWorstCaseWeight > nInitialWorstCaseWeight)
-        {
-            kVirtualKeyboardRow[i].classList.replace(kInitialWorstFound, kWorstFound);
+        if (worstCaseWeight > getStateWeighting(initialWorstFound)) {
+            kVirtualKeyboardRow[i].classList.replace(initialWorstFound, worstFound);
         }
     }
 }
@@ -365,18 +354,17 @@ function processResultForVirtualKeyboard(kEntries, kCurrentRow, kVirtualKeyboard
 
 
 
-function processInputStateForVirtualKeyboard(kVirtualKeyboardRow)
-{
-    for (var i = 0; i < kVirtualKeyboardRow.length; ++i)
-    {
-        const kInitialWorstFound        = kVirtualKeyboardRow[i].classList.item(0);
-        const nSolverIndex              = kValidChars.indexOf(kVirtualKeyboardRow[i].childNodes[0].textContent);
-        if (0 == kSolverInputData[nSolverIndex]["max"])
-        {
-            kVirtualKeyboardRow[i].classList.replace(kInitialWorstFound, E_NODE_POSITION_UNUSED);
+function processInputStateForVirtualKeyboard(kVirtualKeyboardRow) {
+    let initialWorstFound, solverIndex;
+    for (let i = 0, len = kVirtualKeyboardRow.length; i < len; i++) {
+        initialWorstFound = kVirtualKeyboardRow[i].classList.item(0);
+        solverIndex = kValidChars.indexOf(kVirtualKeyboardRow[i].childNodes[0].textContent);
+        if (!kSolverInputData[solverIndex]["max"]) {
+            kVirtualKeyboardRow[i].classList.replace(initialWorstFound, E_NODE_POSITION_UNUSED);
         }
     }
 }
+
 
 function processResult()
 {
