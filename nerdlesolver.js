@@ -1,271 +1,134 @@
-function parseIntegerWithUnary(kExpression, eSolutionType)
-{
-    // parseInt cannot cope with anything other than a unary -
-    // So collapse them manually
-    var bPositive    = true;
-    var nFirstNumber = -1;
+function parseIntegerWithUnary(kExpression, eSolutionType) {
+  let bPositive = true;
+  let nFirstNumber = kExpression.search(/[0-9]/);
 
-    for (var i = 0; (nFirstNumber == -1) && (i < kExpression.length); ++i)
-    {
-        const kChar = kExpression.charAt(i);
-        if ((E_SOLUTION_NAFF != eSolutionType) && (kExpression[i] == "+"))
-        {
-            return NaN;
-        }
+  for (let i = 0; i < nFirstNumber; i++) {
+    if (kExpression[i] === "+") return NaN;
+    if (kExpression[i] === "-") bPositive = !bPositive;
+  }
 
-        if (kChar == "-")
-        {
-            bPositive = !bPositive;
-        }
-        else if (kValidNumbers.includes(kChar))
-        {
-            if ((E_SOLUTION_NAFF != eSolutionType) && (i > 1))
-            {
-                return NaN;
-            }
-            nFirstNumber = i;
-        }
-    }
-
-    const kAbsoluteValue = kExpression.substring(nFirstNumber);
-    if (E_SOLUTION_NAFF != eSolutionType)
-    {
-        if ((kAbsoluteValue.length > 1) && (kAbsoluteValue[0] == "0"))
-        {
-            return NaN;
-        }
-        else if ((nFirstNumber > 0) && (kAbsoluteValue[0] == "0"))
-        {
-            return NaN;
-        }
-    }
-    
-    return (bPositive ? 1 : -1) * parseInt(kAbsoluteValue);
+  if (eSolutionType !== "E_SOLUTION_NAFF") {
+    if (nFirstNumber > 1) return NaN;
+    if (kExpression[nFirstNumber] === "0" && kExpression.length > 1) return NaN;
+  }
+  return (bPositive ? 1 : -1) * parseInt(kExpression.slice(nFirstNumber));
 }
 
-function parseExpressionList(kExpressionList, eSolutionType)
-{
-    const kOrderOfPrecedence = ["*/","+-"];
 
-    if (E_SOLUTION_GOOD == eSolutionType)
-    {
-        for (var i = 0; i < kExpressionList.length; ++i)
-        {
-            if ("*/+-".includes(kExpressionList[i]))
-            {
-                if (kExpressionList[i+1] < 0)
-                {
-                    return NaN;
-                }
-                else if ((kExpressionList[i-1] == 0) ||
-                         (kExpressionList[i+1] == 0))
-                {
-                    return NaN;
-                }
-            }
+
+function parseExpressionList(kExpressionList, eSolutionType) {
+  const kOrderOfPrecedence = ["*/", "+-"];
+
+  if (E_SOLUTION_GOOD === eSolutionType) {
+    for (let i = 0; i < kExpressionList.length; ++i) {
+      if ("*/+-".includes(kExpressionList[i])) {
+        if (kExpressionList[i + 1] < 0) {
+          return NaN;
+        } else if (kExpressionList[i - 1] === 0 || kExpressionList[i + 1] === 0) {
+          return NaN;
         }
+      }
     }
+  }
 
-    while (kExpressionList.length > 1)
-    {
-        const nSanityCheck = kExpressionList.length;
-        for (var i = 0; i < kOrderOfPrecedence.length; ++i)
-        {
-            while (kExpressionList.length > 1)
-            {
-                var kOperator = null;
-                for (var j = 0; j < kExpressionList.length; ++j)
-                {
-                    if (kOrderOfPrecedence[i].includes(kExpressionList[j]))
-                    {
-                        kOperator = kExpressionList[j];
-                        break;
-                    }
-                }
-    
-                if (null == kOperator)
-                {
-                    break;
-                }
+  for (let i = 0; i < kOrderOfPrecedence.length; ++i) {
+    for (let j = 0; j < kExpressionList.length; ++j) {
+      const item = kExpressionList[j];
+      if (!kOrderOfPrecedence[i].includes(item)) continue;
 
-                const nOperatorIndex = kExpressionList.indexOf(kOperator);
+      const nOperatorIndex = j;
+      const left = kExpressionList[j - 1];
+      const right = kExpressionList[j + 1];
 
-                if (E_SOLUTION_GOOD == eSolutionType)
-                {
-                    if ((kExpressionList[nOperatorIndex-1] == 0) &&
-                        (kExpressionList[nOperatorIndex+1] == 0))
-                    {
-                        return NaN;
-                    }
-                }
-    
-                switch (kOperator)
-                {
-                    case "*":
-                    {
-                        kExpressionList[nOperatorIndex] = kExpressionList[nOperatorIndex-1] *
-                                                          kExpressionList[nOperatorIndex+1];
-                        kExpressionList.splice(nOperatorIndex+1, 1);
-                        kExpressionList.splice(nOperatorIndex-1, 1);
-                    } break;
-    
-                    case "/":
-                    {
-                        if (0 == kExpressionList[nOperatorIndex+1])
-                        {
-                            return NaN;
-                        }
+      if (E_SOLUTION_GOOD === eSolutionType) {
+        if (left === 0 && right === 0) return NaN;
+      }
 
-                        kExpressionList[nOperatorIndex] = kExpressionList[nOperatorIndex-1] /
-                                                          kExpressionList[nOperatorIndex+1];
-                        kExpressionList.splice(nOperatorIndex+1, 1);
-                        kExpressionList.splice(nOperatorIndex-1, 1);
-                    } break;
-    
-                    case "+":
-                    {
-                        kExpressionList[nOperatorIndex] = kExpressionList[nOperatorIndex-1] +
-                                                          kExpressionList[nOperatorIndex+1];
-                        kExpressionList.splice(nOperatorIndex+1, 1);
-                        kExpressionList.splice(nOperatorIndex-1, 1);
-                    } break;
-    
-                    case "-":
-                    {
-                        kExpressionList[nOperatorIndex] = kExpressionList[nOperatorIndex-1] -
-                                                          kExpressionList[nOperatorIndex+1];
-                        kExpressionList.splice(nOperatorIndex+1, 1);
-                        kExpressionList.splice(nOperatorIndex-1, 1);
-                    } break;
-                }
-            }
-        }
-
-        if (nSanityCheck == kExpressionList.length)
-        {
-            return NaN;
-        }
+      switch (item) {
+        case "*":
+          kExpressionList[nOperatorIndex] = left * right;
+          break;
+        case "/":
+          if (right === 0) return NaN;
+          kExpressionList[nOperatorIndex] = left / right;
+          break;
+        case "+":
+          kExpressionList[nOperatorIndex] = left + right;
+          break;
+        case "-":
+          kExpressionList[nOperatorIndex] = left - right;
+          break;
+      }
+      kExpressionList.splice(j + 1, 1);
+      kExpressionList.splice(j - 1, 1);
+      j -= 2;
     }
+  }
 
-    return kExpressionList[0];
+  return kExpressionList.length === 1 ? kExpressionList[0] : NaN;
 }
 
-function parseExpression(kExpression, nOffset, eSolutionType, bRenderError, bAllowExpression, bAllowNonInteger)
-{
-    if (undefined == nOffset)
-    {
-        nOffset = 0;
-    }
-    if (undefined == eSolutionType)
-    {
-        eSolutionType = E_SOLUTION_NAFF;
-    }
-    if (undefined == bRenderError)
-    {
-        bRenderError = false;
-    }
-    if (undefined == bAllowExpression)
-    {
-        bAllowExpression = true;
-    }
-    if (undefined == bAllowNonInteger)
-    {
-        bAllowNonInteger = false;
+
+
+
+function parseExpression(kExpression, nOffset = 0, eSolutionType = E_SOLUTION_NAFF, bRenderError = false, bAllowExpression = true, bAllowNonInteger = false) {
+  let kExpressionList = [];
+  let bAnyNumberFound = false;
+  let kValidityString = kValidNumbersWithSign;
+  let kCurrent = "";
+
+  for (let i = 0; i < kExpression.length; ++i) {
+    const kChar = kExpression.charAt(i);
+    if (!bAnyNumberFound && kValidNumbers.includes(kChar)) {
+      bAnyNumberFound = true;
+      kValidityString = kValidNumbers;
     }
 
-    // Convert the Expression into an array of values and operators
-    // Note: We'll resolve unaries at this stage to stop this being
-    //       an absolute headache
-    var kExpressionList = [];
-    var bAnyNumberFound = false;
-    var kValidityString = kValidNumbersWithSign;
-    var kCurrent        = "";
-    
-    for (var i = 0; i < kExpression.length; ++i)
-    {
-        const kChar = kExpression.charAt(i);
-
-        if (false == bAnyNumberFound)
-        {
-            if (kValidNumbers.includes(kChar))
-            {
-                bAnyNumberFound = true;
-                kValidityString = kValidNumbers;
-            }
-        }
-
-        if (kValidityString.includes(kChar))
-        {
-            kCurrent += kChar;
-        }
-        else if (bAnyNumberFound)
-        {
-            const nValue = parseIntegerWithUnary(kCurrent, eSolutionType);
-            if (isNaN(nValue))
-            {
-                return [false, 0];
-            }
-            kExpressionList.push(nValue);
-            kExpressionList.push(kChar);
-            
-            kValidityString = kValidNumbersWithSign;
-            bAnyNumberFound = false;
-            kCurrent        = "";
-        }
-        else
-        {
-            if (bRenderError)
-            {
-                kIssuesTextNode.textContent = "Multiple operators without corresponding values (First error shown in red)";
-                kCurrentRow[i+nOffset].classList.add(E_NODE_INVALID);
-                kCurrentRow[i+nOffset].classList.remove(E_NODE_POSITION_UNKNOWN);
-            }
-            return [false, 0];
-        }
+    if (kValidityString.includes(kChar)) {
+      kCurrent += kChar;
+    } else if (bAnyNumberFound) {
+      const nValue = parseIntegerWithUnary(kCurrent, eSolutionType);
+      if (isNaN(nValue)) return [false, 0];
+      kExpressionList.push(nValue, kChar);
+      kValidityString = kValidNumbersWithSign;
+      bAnyNumberFound = false;
+      kCurrent = "";
+    } else {
+      if (bRenderError) {
+        kIssuesTextNode.textContent = "Multiple operators without corresponding values (First error shown in red)";
+        kCurrentRow[i + nOffset].classList.add(E_NODE_INVALID);
+        kCurrentRow[i + nOffset].classList.remove(E_NODE_POSITION_UNKNOWN);
+      }
+      return [false, 0];
     }
+  }
 
-    if ((kCurrent.length == 0) || !bAnyNumberFound)
-    {
-        if (bRenderError)
-        {
-            kIssuesTextNode.textContent = "Expression must end in a number to be valid";
-            kCurrentRow[kCurrent.length-1+nOffset].classList.add(E_NODE_INVALID);
-            kCurrentRow[kCurrent.length-1+nOffset].classList.remove(E_NODE_POSITION_UNKNOWN);
-        }
-        return [false, 0];
+  if (!bAnyNumberFound || kCurrent.length === 0) {
+    if (bRenderError) {
+      kIssuesTextNode.textContent = "Expression must end in a number to be valid";
+      kCurrentRow[kCurrent.length - 1 + nOffset].classList.add(E_NODE_INVALID);
+      kCurrentRow[kCurrent.length - 1 + nOffset].classList.remove(E_NODE_POSITION_UNKNOWN);
     }
-    
-    const nValue = parseIntegerWithUnary(kCurrent, eSolutionType);
-    if (isNaN(nValue))
-    {
-        return [false, 0];
-    }
-    kExpressionList.push(nValue);
+    return [false, 0];
+  }
 
-    if (false == bAllowExpression)
-    {
-        if (kExpressionList.length != 1)
-        {
-            return [false, 0]
-        }
-    }
+  const nValue = parseIntegerWithUnary(kCurrent, eSolutionType);
+  if (isNaN(nValue)) return [false, 0];
+  kExpressionList.push(nValue);
 
-    const nResult = parseExpressionList(kExpressionList, eSolutionType);
-    if (isNaN(nResult))
-    {
-        return [false, 0];
-    }
+  if (!bAllowExpression && kExpressionList.length !== 1) return [false, 0];
 
-    if (!bAllowNonInteger)
-    {
-        if (0 != (nResult % 1))
-        {
-            return [false, 0];
-        }
-    }
+  const nResult = parseExpressionList(kExpressionList, eSolutionType);
+  if (isNaN(nResult)) return [false, 0];
+  if (!bAllowNonInteger && nResult % 1 !== 0) return [false, 0];
 
-    return [true, nResult];
+  return [true, nResult];
 }
+
+
+
+
+
 
 function processExpression()
 {
@@ -436,6 +299,10 @@ function processExpression()
     return true;
 }
 
+
+
+
+
 function getStateWeighting(kClassState)
 {
     if (E_NODE_POSITION_UNKNOWN == kClassState)
@@ -455,6 +322,11 @@ function getStateWeighting(kClassState)
         return 3;
     }
 }
+
+
+
+
+
 
 function processResultForVirtualKeyboard(kEntries, kCurrentRow, kVirtualKeyboardRow)
 {
@@ -488,6 +360,10 @@ function processResultForVirtualKeyboard(kEntries, kCurrentRow, kVirtualKeyboard
         }
     }
 }
+
+
+
+
 
 function processInputStateForVirtualKeyboard(kVirtualKeyboardRow)
 {
